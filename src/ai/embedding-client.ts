@@ -42,11 +42,14 @@ export class OpenAICompatibleEmbeddingClient implements EmbeddingClient {
     }
 
     const url = `${settings.embeddingBaseUrl.replace(/\/$/, "")}/embeddings`;
-    const body = {
+    const body: Record<string, unknown> = {
       model: settings.embeddingModel,
       input: texts,
-      dimensions: settings.embeddingDimensions
     };
+
+    if (settings.embeddingDimensionsParam) {
+      body["dimensions"] = settings.embeddingDimensions;
+    }
     const log = createModelCallLogger({
       kind: "embedding",
       operation: "batchGenerate",

@@ -15,11 +15,13 @@ export interface AiRuntimeSettings {
   embeddingBaseUrl: string;
   embeddingModel: string;
   embeddingDimensions: number;
+  embeddingDimensionsParam: boolean;
   embeddingApiKey: string;
   hasRemoteEmbedding: boolean;
   llmBaseUrl: string;
   llmModel: string;
   llmApiKey: string;
+  llmExtraBody: string;
   hasRemoteLlm: boolean;
   llmTimeoutMs: number;
   llmMaxRetries: number;
@@ -58,16 +60,19 @@ export class AiSettingsService {
     const settings = await this.getSettingsOrFallback();
     const embeddingApiKey = settings.embeddingApiKey?.trim() ?? "";
     const llmApiKey = settings.llmApiKey?.trim() ?? "";
+    const llmExtraBody = settings.llmExtraBody?.trim() ?? "";
     const chunkTokenLimit = readBoundedInteger(settings.metadata.chunkTokenLimit, DEFAULT_CHUNK_TOKEN_LIMIT, 64, 8192);
     return {
       embeddingBaseUrl: settings.embeddingBaseUrl,
       embeddingModel: settings.embeddingModel,
       embeddingDimensions: settings.embeddingDimensions,
+      embeddingDimensionsParam: config.EMBEDDING_DIMENSIONS_PARAM,
       embeddingApiKey,
       hasRemoteEmbedding: embeddingApiKey.length > 0,
       llmBaseUrl: settings.llmBaseUrl,
       llmModel: settings.llmModel,
       llmApiKey,
+      llmExtraBody,
       hasRemoteLlm: llmApiKey.length > 0,
       llmTimeoutMs: settings.llmTimeoutMs,
       llmMaxRetries: settings.llmMaxRetries,
@@ -137,12 +142,14 @@ function envSettings(): AiProviderSettingsRecord {
     embeddingBaseUrl: config.EMBEDDING_BASE_URL,
     embeddingModel: config.EMBEDDING_MODEL,
     embeddingDimensions: SUPPORTED_EMBEDDING_DIMENSIONS,
+    embeddingDimensionsParam: config.EMBEDDING_DIMENSIONS_PARAM,
     embeddingApiKey: config.EMBEDDING_API_KEY || null,
     llmBaseUrl: config.LLM_BASE_URL,
     llmModel: config.LLM_MODEL,
     llmApiKey: config.LLM_API_KEY || null,
     llmTimeoutMs: config.LLM_TIMEOUT_MS,
     llmMaxRetries: config.LLM_MAX_RETRIES,
+    llmExtraBody: config.LLM_EXTRA_BODY || null,
     metadata: {
       defaultSearchMode: config.DEFAULT_SEARCH_MODE,
       defaultSearchTopK: DEFAULT_SEARCH_TOP_K,

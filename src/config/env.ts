@@ -14,6 +14,7 @@ const envSchema = z.object({
   AUTH_MODE: z.enum(["none", "bearer", "external"]).default("none"),
   EMBEDDING_DIMENSIONS: z.coerce.number().int().positive().default(SUPPORTED_EMBEDDING_DIMENSIONS)
     .refine((value) => value === SUPPORTED_EMBEDDING_DIMENSIONS, `EMBEDDING_DIMENSIONS must be ${SUPPORTED_EMBEDDING_DIMENSIONS} because pgvector columns are vector(${SUPPORTED_EMBEDDING_DIMENSIONS})`),
+  EMBEDDING_DIMENSIONS_PARAM: z.preprocess((v) => v === undefined ? v : v === "true" || v === "1" || v === true, z.boolean()).default(true),
   EMBEDDING_MODEL: z.string().min(1).default("text-embedding-3-large"),
   EMBEDDING_API_KEY: z.string().default(""),
   EMBEDDING_BASE_URL: z.string().url().default(DEFAULT_302AI_BASE_URL),
@@ -22,6 +23,7 @@ const envSchema = z.object({
   LLM_BASE_URL: z.string().url().default(DEFAULT_302AI_BASE_URL),
   LLM_TIMEOUT_MS: z.coerce.number().int().positive().default(60_000),
   LLM_MAX_RETRIES: z.coerce.number().int().min(0).default(2),
+  LLM_EXTRA_BODY: z.string().default(""),
   RERANK_BASE_URL: z.string().url().optional(),
   RERANK_MODEL: z.string().min(1).default("qwen3-rerank"),
   RERANK_INSTRUCT: z.string().min(1).default("Given a user question, rank SAG event candidates by relevance and usefulness for retrieval-augmented question answering."),

@@ -313,12 +313,14 @@ export interface AiProviderSettingsRecord {
   embeddingBaseUrl: string;
   embeddingModel: string;
   embeddingDimensions: number;
+  embeddingDimensionsParam: boolean;
   embeddingApiKey?: string | null;
   llmBaseUrl: string;
   llmModel: string;
   llmApiKey?: string | null;
   llmTimeoutMs: number;
   llmMaxRetries: number;
+  llmExtraBody?: string | null;
   metadata: Record<string, unknown>;
   createdAt: string;
   updatedAt: string;

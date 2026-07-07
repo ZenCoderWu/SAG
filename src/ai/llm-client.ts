@@ -119,12 +119,22 @@ export class OpenAICompatibleLlmClient implements LlmClient {
       { role: "system" as const, content: input.system ?? "" },
       { role: "user" as const, content: input.user ?? "" }
     ];
-    const body = {
+    const body: Record<string, unknown> = {
       model: settings.llmModel,
       messages,
       response_format: { type: "json_object" },
       temperature: 0.1
     };
+
+    if (settings.llmExtraBody) {
+      try {
+        const extra = JSON.parse(settings.llmExtraBody);
+        Object.assign(body, extra);
+      } catch {
+        // ignore invalid JSON
+      }
+    }
+
 
     let lastError: unknown;
     const maxAttempts = settings.llmMaxRetries + 1;
