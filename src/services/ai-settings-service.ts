@@ -21,7 +21,7 @@ export interface AiRuntimeSettings {
   llmBaseUrl: string;
   llmModel: string;
   llmApiKey: string;
-  llmExtraBody: string;
+  llmExtraBody: Record<string, unknown>;
   hasRemoteLlm: boolean;
   llmTimeoutMs: number;
   llmMaxRetries: number;
@@ -36,6 +36,7 @@ export interface UpdateAiSettingsInput {
   embeddingBaseUrl: string;
   embeddingModel: string;
   embeddingDimensions: number;
+  embeddingDimensionsParam: boolean;
   embeddingApiKey?: string;
   clearEmbeddingApiKey?: boolean;
   llmBaseUrl: string;
@@ -44,6 +45,7 @@ export interface UpdateAiSettingsInput {
   clearLlmApiKey?: boolean;
   llmTimeoutMs: number;
   llmMaxRetries: number;
+  llmExtraBody: string;
   defaultSearchMode: SearchMode;
   defaultSearchTopK: number;
   defaultChunkingMode: ChunkingMode;
@@ -60,13 +62,13 @@ export class AiSettingsService {
     const settings = await this.getSettingsOrFallback();
     const embeddingApiKey = settings.embeddingApiKey?.trim() ?? "";
     const llmApiKey = settings.llmApiKey?.trim() ?? "";
-    const llmExtraBody = settings.llmExtraBody?.trim() ?? "";
+    const llmExtraBody = settings.llmExtraBody || {};
     const chunkTokenLimit = readBoundedInteger(settings.metadata.chunkTokenLimit, DEFAULT_CHUNK_TOKEN_LIMIT, 64, 8192);
     return {
       embeddingBaseUrl: settings.embeddingBaseUrl,
       embeddingModel: settings.embeddingModel,
       embeddingDimensions: settings.embeddingDimensions,
-      embeddingDimensionsParam: config.EMBEDDING_DIMENSIONS_PARAM,
+      embeddingDimensionsParam: settings.embeddingDimensionsParam,
       embeddingApiKey,
       hasRemoteEmbedding: embeddingApiKey.length > 0,
       llmBaseUrl: settings.llmBaseUrl,
@@ -97,6 +99,7 @@ export class AiSettingsService {
       embeddingBaseUrl: input.embeddingBaseUrl.trim(),
       embeddingModel: input.embeddingModel.trim(),
       embeddingDimensions: input.embeddingDimensions,
+      embeddingDimensionsParam: input.embeddingDimensionsParam,
       embeddingApiKey,
       preserveEmbeddingApiKey: !input.clearEmbeddingApiKey && embeddingApiKey == null,
       llmBaseUrl: input.llmBaseUrl.trim(),
@@ -105,6 +108,7 @@ export class AiSettingsService {
       preserveLlmApiKey: !input.clearLlmApiKey && llmApiKey == null,
       llmTimeoutMs: input.llmTimeoutMs,
       llmMaxRetries: input.llmMaxRetries,
+      llmExtraBody: parseLlmExtraBody(input.llmExtraBody),
       metadata: {
         updatedVia: "webui",
         previousUpdatedAt: current.updatedAt,
@@ -137,6 +141,7 @@ export class AiSettingsService {
 
 function envSettings(): AiProviderSettingsRecord {
   const now = new Date().toISOString();
+  const llmExtraBody = config.LLM_EXTRA_BODY ? JSON.parse(config.LLM_EXTRA_BODY) : {};
   return {
     id: "global",
     embeddingBaseUrl: config.EMBEDDING_BASE_URL,
@@ -149,7 +154,7 @@ function envSettings(): AiProviderSettingsRecord {
     llmApiKey: config.LLM_API_KEY || null,
     llmTimeoutMs: config.LLM_TIMEOUT_MS,
     llmMaxRetries: config.LLM_MAX_RETRIES,
-    llmExtraBody: config.LLM_EXTRA_BODY || null,
+    llmExtraBody: llmExtraBody,
     metadata: {
       defaultSearchMode: config.DEFAULT_SEARCH_MODE,
       defaultSearchTopK: DEFAULT_SEARCH_TOP_K,
@@ -169,10 +174,12 @@ function toPublicSettings(settings: AiProviderSettingsRecord): PublicAiProviderS
     embeddingBaseUrl: settings.embeddingBaseUrl,
     embeddingModel: settings.embeddingModel,
     embeddingDimensions: settings.embeddingDimensions,
+    embeddingDimensionsParam: settings.embeddingDimensionsParam,
     hasEmbeddingApiKey: (settings.embeddingApiKey?.trim() ?? "").length > 0,
     llmBaseUrl: settings.llmBaseUrl,
     llmModel: settings.llmModel,
     hasLlmApiKey: (settings.llmApiKey?.trim() ?? "").length > 0,
+    llmExtraBody: JSON.stringify(settings.llmExtraBody ?? {}, null, 2),
     llmTimeoutMs: settings.llmTimeoutMs,
     llmMaxRetries: settings.llmMaxRetries,
     defaultSearchMode: readDefaultSearchMode(settings.metadata),
@@ -207,6 +214,17 @@ function clampInteger(value: unknown, fallback: number, min: number, max: number
 function normalizeOptionalSecret(value: string | undefined): string | null {
   const trimmed = value?.trim() ?? "";
   return trimmed.length > 0 ? trimmed : null;
+}
+
+function parseLlmExtraBody(value: string): Record<string, unknown> {
+  const trimmed = value?.trim() ?? "";
+  if (!trimmed) return {};
+  try {
+    const parsed = JSON.parse(trimmed);
+    return typeof parsed === "object" && parsed !== null && !Array.isArray(parsed) ? parsed : {};
+  } catch {
+    return {};
+  }
 }
 
 export const aiSettingsService = new AiSettingsService();

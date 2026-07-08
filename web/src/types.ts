@@ -258,10 +258,12 @@ export interface PublicAiProviderSettings {
   embeddingBaseUrl: string;
   embeddingModel: string;
   embeddingDimensions: number;
+  embeddingDimensionsParam: boolean;
   hasEmbeddingApiKey: boolean;
   llmBaseUrl: string;
   llmModel: string;
   hasLlmApiKey: boolean;
+  llmExtraBody: string;
   llmTimeoutMs: number;
   llmMaxRetries: number;
   defaultSearchMode: SearchMode;

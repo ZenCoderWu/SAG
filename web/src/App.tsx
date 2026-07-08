@@ -2636,6 +2636,7 @@ type SettingsInput = {
   embeddingBaseUrl: string;
   embeddingModel: string;
   embeddingDimensions: number;
+  embeddingDimensionsParam: boolean;
   embeddingApiKey?: string;
   clearEmbeddingApiKey?: boolean;
   llmBaseUrl: string;
@@ -2644,6 +2645,7 @@ type SettingsInput = {
   clearLlmApiKey?: boolean;
   llmTimeoutMs: number;
   llmMaxRetries: number;
+  llmExtraBody: string;
   defaultSearchMode: SearchMode;
   defaultSearchTopK: number;
   defaultChunkingMode: ChunkingMode;
@@ -2677,6 +2679,7 @@ function SettingsPanel(props: {
   const [embeddingBaseUrl, setEmbeddingBaseUrl] = useState("");
   const [embeddingModel, setEmbeddingModel] = useState("");
   const [embeddingDimensions, setEmbeddingDimensions] = useState(1024);
+  const [embeddingDimensionsParam, setEmbeddingDimensionsParam] = useState(true);
   const [embeddingApiKey, setEmbeddingApiKey] = useState("");
   const [clearEmbeddingApiKey, setClearEmbeddingApiKey] = useState(false);
   const [llmBaseUrl, setLlmBaseUrl] = useState("");
@@ -2685,6 +2688,7 @@ function SettingsPanel(props: {
   const [clearLlmApiKey, setClearLlmApiKey] = useState(false);
   const [llmTimeoutMs, setLlmTimeoutMs] = useState(60000);
   const [llmMaxRetries, setLlmMaxRetries] = useState(2);
+  const [llmExtraBody, setLlmExtraBody] = useState("");
   const [defaultSearchMode, setDefaultSearchMode] = useState<SearchMode>("fast");
   const [defaultSearchTopK, setDefaultSearchTopK] = useState(10);
   const [defaultChunkingMode, setDefaultChunkingMode] = useState<ChunkingMode>("heading_strict");
@@ -2696,6 +2700,7 @@ function SettingsPanel(props: {
     setEmbeddingBaseUrl(props.settings.embeddingBaseUrl);
     setEmbeddingModel(props.settings.embeddingModel);
     setEmbeddingDimensions(props.settings.embeddingDimensions);
+    setEmbeddingDimensionsParam(props.settings.embeddingDimensionsParam);
     setEmbeddingApiKey("");
     setClearEmbeddingApiKey(false);
     setLlmBaseUrl(props.settings.llmBaseUrl);
@@ -2704,6 +2709,7 @@ function SettingsPanel(props: {
     setClearLlmApiKey(false);
     setLlmTimeoutMs(props.settings.llmTimeoutMs);
     setLlmMaxRetries(props.settings.llmMaxRetries);
+    setLlmExtraBody(props.settings.llmExtraBody ?? "");
     setDefaultSearchMode(props.settings.defaultSearchMode);
     setDefaultSearchTopK(boundedInteger(props.settings.defaultSearchTopK, DEFAULT_SEARCH_TOP_K, 1, 50));
     setDefaultChunkingMode(normalizeChunkingMode(props.settings.defaultChunkingMode));
@@ -2729,6 +2735,7 @@ function SettingsPanel(props: {
           embeddingBaseUrl,
           embeddingModel,
           embeddingDimensions,
+          embeddingDimensionsParam,
           embeddingApiKey,
           clearEmbeddingApiKey,
           llmBaseUrl,
@@ -2737,6 +2744,7 @@ function SettingsPanel(props: {
           clearLlmApiKey,
           llmTimeoutMs,
           llmMaxRetries,
+          llmExtraBody,
           defaultSearchMode,
           defaultSearchTopK,
           defaultChunkingMode,
@@ -2794,6 +2802,16 @@ function SettingsPanel(props: {
         <Field label={t("向量维度（数据库固定）", "Vector dimensions (database fixed)")}>
           <Input type="number" min={1024} max={1024} value={embeddingDimensions} disabled onChange={(event) => setEmbeddingDimensions(Number(event.target.value))} />
         </Field>
+        <Field label={t("传递 dimensions 参数", "Send dimensions param")}>
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={embeddingDimensionsParam}
+              onChange={(event) => setEmbeddingDimensionsParam(event.target.checked)}
+            />
+            {t("调用 Embedding 接口时携带 dimensions 参数", "Send dimensions parameter when calling Embedding API")}
+          </label>
+        </Field>
         <Field label={t(`Embedding 密钥：${props.settings.hasEmbeddingApiKey ? "已配置" : "未配置"}`, `Embedding key: ${props.settings.hasEmbeddingApiKey ? "configured" : "not configured"}`)}>
           <Input
             type="password"
@@ -2816,6 +2834,18 @@ function SettingsPanel(props: {
         </Field>
         <Field label={t("重试次数", "Retry count")}>
           <Input type="number" min={0} max={10} value={llmMaxRetries} onChange={(event) => setLlmMaxRetries(Number(event.target.value))} />
+        </Field>
+        <Field label={t("LLM 额外请求体（JSON）", "LLM extra body (JSON)")}>
+          <Textarea
+            value={llmExtraBody}
+            onChange={(event) => setLlmExtraBody(event.target.value)}
+            placeholder='{"chat_template_kwargs": {"enable_thinking": false}}'
+            rows={4}
+            className="font-mono text-xs"
+          />
+          <p className="mt-1 text-xs text-muted-foreground">
+            {t("以 JSON 格式填写额外的请求参数，会合并到每次 LLM 请求体中。留空则不附加。", "Extra request parameters in JSON format, merged into each LLM request body. Leave blank to skip.")}
+          </p>
         </Field>
         <Field label={t(`LLM 密钥：${props.settings.hasLlmApiKey ? "已配置" : "未配置"}`, `LLM key: ${props.settings.hasLlmApiKey ? "configured" : "not configured"}`)}>
           <Input

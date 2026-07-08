@@ -163,12 +163,14 @@ function aiProviderSettingsFromRow(row: Record<string, unknown>): AiProviderSett
     embeddingBaseUrl: String(row.embedding_base_url),
     embeddingModel: String(row.embedding_model),
     embeddingDimensions: Number(row.embedding_dimensions),
+    embeddingDimensionsParam: Boolean(row.embedding_dimensions_param),
     embeddingApiKey: row.embedding_api_key == null ? null : String(row.embedding_api_key),
     llmBaseUrl: String(row.llm_base_url),
     llmModel: String(row.llm_model),
     llmApiKey: row.llm_api_key == null ? null : String(row.llm_api_key),
     llmTimeoutMs: Number(row.llm_timeout_ms),
     llmMaxRetries: Number(row.llm_max_retries),
+    llmExtraBody: (row.llm_extra_body ?? {}) as Record<string, unknown>,
     metadata: (row.metadata ?? {}) as Record<string, unknown>,
     createdAt: new Date(String(row.created_at)).toISOString(),
     updatedAt: new Date(String(row.updated_at)).toISOString()
@@ -1290,6 +1292,7 @@ export async function upsertAiProviderSettings(input: {
   embeddingBaseUrl: string;
   embeddingModel: string;
   embeddingDimensions: number;
+  embeddingDimensionsParam: boolean;
   embeddingApiKey?: string | null;
   preserveEmbeddingApiKey?: boolean;
   llmBaseUrl: string;
@@ -1298,6 +1301,7 @@ export async function upsertAiProviderSettings(input: {
   preserveLlmApiKey?: boolean;
   llmTimeoutMs: number;
   llmMaxRetries: number;
+  llmExtraBody?: Record<string, unknown>;
   metadata?: Record<string, unknown>;
 }): Promise<AiProviderSettingsRecord> {
   const result = await pool.query(
@@ -1307,12 +1311,14 @@ export async function upsertAiProviderSettings(input: {
         embedding_base_url,
         embedding_model,
         embedding_dimensions,
+        embedding_dimensions_param,
         embedding_api_key,
         llm_base_url,
         llm_model,
         llm_api_key,
         llm_timeout_ms,
         llm_max_retries,
+        llm_extra_body,
         metadata
       )
       values (
@@ -1326,24 +1332,28 @@ export async function upsertAiProviderSettings(input: {
         $7,
         $8,
         $9,
-        $10::jsonb
+        $10,
+        $11::jsonb,
+        $12::jsonb
       )
       on conflict (id) do update set
         embedding_base_url = excluded.embedding_base_url,
         embedding_model = excluded.embedding_model,
         embedding_dimensions = excluded.embedding_dimensions,
+        embedding_dimensions_param = excluded.embedding_dimensions_param,
         embedding_api_key = case
-          when $11::boolean then ai_provider_settings.embedding_api_key
+          when $13::boolean then ai_provider_settings.embedding_api_key
           else excluded.embedding_api_key
         end,
         llm_base_url = excluded.llm_base_url,
         llm_model = excluded.llm_model,
         llm_api_key = case
-          when $12::boolean then ai_provider_settings.llm_api_key
+          when $14::boolean then ai_provider_settings.llm_api_key
           else excluded.llm_api_key
         end,
         llm_timeout_ms = excluded.llm_timeout_ms,
         llm_max_retries = excluded.llm_max_retries,
+        llm_extra_body = excluded.llm_extra_body,
         metadata = ai_provider_settings.metadata || excluded.metadata,
         updated_at = now()
       returning *
@@ -1352,12 +1362,14 @@ export async function upsertAiProviderSettings(input: {
       input.embeddingBaseUrl,
       input.embeddingModel,
       input.embeddingDimensions,
+      input.embeddingDimensionsParam,
       input.embeddingApiKey ?? null,
       input.llmBaseUrl,
       input.llmModel,
       input.llmApiKey ?? null,
       input.llmTimeoutMs,
       input.llmMaxRetries,
+      JSON.stringify(input.llmExtraBody ?? {}),
       JSON.stringify(input.metadata ?? {}),
       input.preserveEmbeddingApiKey ?? false,
       input.preserveLlmApiKey ?? false

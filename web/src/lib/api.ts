@@ -320,6 +320,7 @@ export const api = {
     embeddingBaseUrl: string;
     embeddingModel: string;
     embeddingDimensions: number;
+    embeddingDimensionsParam: boolean;
     embeddingApiKey?: string;
     clearEmbeddingApiKey?: boolean;
     llmBaseUrl: string;
@@ -328,6 +329,7 @@ export const api = {
     clearLlmApiKey?: boolean;
     llmTimeoutMs: number;
     llmMaxRetries: number;
+    llmExtraBody: string;
     defaultSearchMode: SearchMode;
     defaultSearchTopK: number;
     defaultChunkingMode: ChunkingMode;

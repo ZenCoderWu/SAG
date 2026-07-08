@@ -127,12 +127,8 @@ export class OpenAICompatibleLlmClient implements LlmClient {
     };
 
     if (settings.llmExtraBody) {
-      try {
-        const extra = JSON.parse(settings.llmExtraBody);
-        Object.assign(body, extra);
-      } catch {
-        // ignore invalid JSON
-      }
+      const extra = settings.llmExtraBody;
+      Object.assign(body, extra);
     }
 
 

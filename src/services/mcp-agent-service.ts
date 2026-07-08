@@ -530,6 +530,12 @@ async function planToolAction(input: {
     response_format: { type: "json_object" },
     temperature: 0.1
   };
+
+  if (input.settings.llmExtraBody) {
+      const extra = input.settings.llmExtraBody;
+      Object.assign(body, extra);
+  }
+
   const log = createModelCallLogger({
     kind: "llm",
     operation: "mcp.planToolAction",

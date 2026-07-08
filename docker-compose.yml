@@ -1,4 +1,5 @@
 services:
+  # ─── PostgreSQL + pgvector ─────────────────────────────────────
   postgres:
     image: pgvector/pgvector:pg16
     container_name: sag_lite_postgres
@@ -15,6 +16,57 @@ services:
       interval: 5s
       timeout: 5s
       retries: 20
+    restart: unless-stopped
+
+  # ─── SAG Application ──────────────────────────────────────────
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: sag_lite_app
+    ports:
+      - "${HTTP_PORT:-4173}:4173"
+      - "${MCP_HTTP_PORT:-4174}:4174"
+    environment:
+      NODE_ENV: production
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      HTTP_HOST: 0.0.0.0
+      HTTP_PORT: 4173
+      DATABASE_URL: postgres://sag_lite:sag_lite_pass@postgres:5432/sag_lite
+      DEFAULT_TENANT_ID: ${DEFAULT_TENANT_ID:-default}
+      AUTH_MODE: ${AUTH_MODE:-none}
+      # Embedding
+      EMBEDDING_DIMENSIONS: ${EMBEDDING_DIMENSIONS:-1024}
+      EMBEDDING_DIMENSIONS_PARAM: ${EMBEDDING_DIMENSIONS_PARAM:-true}
+      EMBEDDING_MODEL: ${EMBEDDING_MODEL:-text-embedding-3-large}
+      EMBEDDING_API_KEY: ${EMBEDDING_API_KEY:-}
+      EMBEDDING_BASE_URL: ${EMBEDDING_BASE_URL:-https://api.302ai.cn/v1}
+      # LLM
+      LLM_MODEL: ${LLM_MODEL:-qwen3.6-flash}
+      LLM_API_KEY: ${LLM_API_KEY:-}
+      LLM_BASE_URL: ${LLM_BASE_URL:-https://api.302ai.cn/v1}
+      LLM_TIMEOUT_MS: ${LLM_TIMEOUT_MS:-60000}
+      LLM_MAX_RETRIES: ${LLM_MAX_RETRIES:-2}
+      LLM_EXTRA_BODY: ${LLM_EXTRA_BODY:-}
+      # Rerank
+      RERANK_MODEL: ${RERANK_MODEL:-qwen3-rerank}
+      RERANK_INSTRUCT: ${RERANK_INSTRUCT:-Given a user question, rank SAG event candidates by relevance and usefulness for retrieval-augmented question answering.}
+      # Search
+      DEFAULT_SEARCH_MODE: ${DEFAULT_SEARCH_MODE:-fast}
+      # MCP
+      MCP_TRANSPORT: ${MCP_TRANSPORT:-stdio}
+      MCP_HTTP_PORT: 4174
+      MCP_TOOL_TIMEOUT_MS: ${MCP_TOOL_TIMEOUT_MS:-300000}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:4173/health').then(r => r.ok ? process.exit(0) : process.exit(1)).catch(() => process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      start_period: 30s
+      retries: 3
+    restart: unless-stopped
 
 volumes:
   sag_lite_pgdata:

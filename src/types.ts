@@ -320,7 +320,7 @@ export interface AiProviderSettingsRecord {
   llmApiKey?: string | null;
   llmTimeoutMs: number;
   llmMaxRetries: number;
-  llmExtraBody?: string | null;
+  llmExtraBody: Record<string, unknown>;
   metadata: Record<string, unknown>;
   createdAt: string;
   updatedAt: string;
@@ -331,10 +331,12 @@ export interface PublicAiProviderSettings {
   embeddingBaseUrl: string;
   embeddingModel: string;
   embeddingDimensions: number;
+  embeddingDimensionsParam: boolean;
   hasEmbeddingApiKey: boolean;
   llmBaseUrl: string;
   llmModel: string;
   hasLlmApiKey: boolean;
+  llmExtraBody: string;
   llmTimeoutMs: number;
   llmMaxRetries: number;
   defaultSearchMode: SearchMode;
