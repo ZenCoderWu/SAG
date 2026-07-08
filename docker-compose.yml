@@ -51,6 +51,7 @@ services:
       # Rerank
       RERANK_MODEL: ${RERANK_MODEL:-qwen3-rerank}
       RERANK_INSTRUCT: ${RERANK_INSTRUCT:-Given a user question, rank SAG event candidates by relevance and usefulness for retrieval-augmented question answering.}
+      RERANK_BASE_URL: ${RERANK_BASE_URL:-https://api.302ai.cn/v1}
       # Search
       DEFAULT_SEARCH_MODE: ${DEFAULT_SEARCH_MODE:-fast}
       # MCP
