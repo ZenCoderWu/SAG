@@ -1,7 +1,7 @@
 services:
   # ─── PostgreSQL + pgvector ─────────────────────────────────────
   postgres:
-    image: pgvector/pgvector:pg16
+    image: harbor.tele-zone.cn:8443/pgvector/pgvector:pg16
     container_name: sag_lite_postgres
     environment:
       POSTGRES_DB: sag_lite
@@ -24,6 +24,7 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: sag_lite_app
+    image: harbor.tele-zone.cn:8443/sag/sag_lite_app:v1.0.0
     ports:
       - "${HTTP_PORT:-4173}:4173"
       - "${MCP_HTTP_PORT:-4174}:4174"

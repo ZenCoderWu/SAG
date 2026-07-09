@@ -9,6 +9,7 @@ import {
   getEntityDetail,
   getDocumentDetail,
   getEventDetail,
+  getSource,
   getProjectGraph,
   getProjectStats,
   listChunksByDocument,
@@ -294,6 +295,10 @@ export class WebuiService {
       limit: 100,
       includeArchived: input.includeArchived ?? false
     });
+  }
+
+  async getProject(projectId: string, tenantId = config.DEFAULT_TENANT_ID) {
+    return getSource(projectId, tenantId);
   }
 
   async getProjectStats(projectId: string, tenantId = config.DEFAULT_TENANT_ID) {

@@ -179,6 +179,16 @@ export function buildHttpServer() {
     };
   });
 
+  app.get("/api/projects/:projectId", async (request, reply) => {
+      const params = request.params as { projectId: string };
+      z.string().uuid().parse(params.projectId);
+      const project = await webuiService.getProject(params.projectId);
+      if (!project) {
+          return reply.code(404).send(notFound("PROJECT_NOT_FOUND", "项目不存在"));
+      }
+      return { project };
+  });
+
   app.post("/api/projects/:projectId/archive", async (request) => {
     const params = request.params as { projectId: string };
     z.string().uuid().parse(params.projectId);
